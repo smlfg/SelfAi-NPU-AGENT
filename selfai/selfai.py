@@ -27,6 +27,7 @@ from selfai.core.planner_validator import (
     validate_plan_logic,
 )
 from selfai.core.merge_ollama_interface import MergeOllamaInterface
+from selfai.core.tool_calling_interface import ToolCallingInterface, ToolCallingError
 from selfai.ui.terminal_ui import TerminalUI
 
 PLANNER_STATE_FILENAME = "planner_state.json"
@@ -904,12 +905,15 @@ def main():
     available_agents = agent_manager.list_agents()
 
     command_hint = "Bereit. Nachricht eingeben, "
+    command_hint += "'/tools list' für verfügbare Tools, "
     if planner_providers:
         command_hint += "'/plan <Ziel>' für DPPM-Plan, '/planner list' für Provider, "
     command_hint += "'/switch <Name|Nummer>' zum Wechseln, 'quit' zum Beenden."
     ui.status(command_hint, "info")
+    ui.status("🔧 Tool-Support ist standardmäßig aktiviert (verwende '/tools off' zum Deaktivieren).", "info")
 
     active_chat_backend_index = 0
+    tools_enabled = True  # Enable tool support for all agents by default
 
     def _generate_with_backend(
         interface,
@@ -961,12 +965,90 @@ def main():
         except Exception as exc:  # pylint: disable=broad-except
             raise RuntimeError(exc) from exc
 
+    def _generate_with_tools(
+        interface,
+        label: str,
+        system_prompt: str,
+        user_prompt: str,
+        history_messages,
+    ) -> tuple[str, bool]:
+        """
+        Generate response with tool-calling support.
+
+        Tries to use ToolCallingInterface first, falls back to direct generation.
+        """
+        try:
+            # Create tool-calling wrapper
+            tool_interface = ToolCallingInterface(
+                llm_interface=interface,
+                tool_names=None,  # Use all available tools
+                max_iterations=5,
+                ui=ui,
+            )
+
+            ui.stop_spinner()
+
+            # Execute with tools (handles both streaming and non-streaming internally)
+            response = tool_interface.execute_with_tools(
+                user_prompt=user_prompt,
+                system_prompt=system_prompt,
+                history=history_messages,
+            )
+
+            # Display the response
+            ui.stream_prefix(f"{label}+Tools")
+            ui.typing_animation(response)
+            return response, False
+
+        except ToolCallingError as exc:
+            # Fall back to regular generation
+            ui.status(f"Tool-Calling fehlgeschlagen: {exc}. Fallback auf direkte Generierung.", "warning")
+            return _generate_with_backend(interface, label, system_prompt, user_prompt, history_messages)
+        except Exception as exc:  # pylint: disable=broad-except
+            # Fall back to regular generation
+            ui.status(f"Tool-Integration Fehler: {exc}. Fallback auf direkte Generierung.", "warning")
+            return _generate_with_backend(interface, label, system_prompt, user_prompt, history_messages)
+
     while True:
         user_input = input("\nDu: ").strip()
         if not user_input:
             continue
         if user_input.lower() == "quit":
             break
+
+        if user_input.lower().startswith("/tools"):
+            from selfai.tools.tool_registry import get_all_tool_schemas
+
+            parts = user_input.split()
+            subcommand = parts[1].lower() if len(parts) > 1 else "list"
+
+            if subcommand == "list":
+                all_tools = get_all_tool_schemas()
+                if all_tools:
+                    ui.status(f"Verfügbare Tools ({len(all_tools)}):", "info")
+                    for tool in all_tools:
+                        name = tool.get("name", "?")
+                        desc = tool.get("description", "")
+                        ui.status(f"  🔧 {name}: {desc[:80]}", "info")
+                else:
+                    ui.status("Keine Tools registriert.", "warning")
+                ui.status(f"Tool-Support: {'✅ Aktiviert' if tools_enabled else '❌ Deaktiviert'}", "info")
+                continue
+
+            if subcommand in ("on", "enable"):
+                nonlocal tools_enabled
+                tools_enabled = True
+                ui.status("✅ Tool-Support aktiviert.", "success")
+                continue
+
+            if subcommand in ("off", "disable"):
+                nonlocal tools_enabled
+                tools_enabled = False
+                ui.status("❌ Tool-Support deaktiviert.", "warning")
+                continue
+
+            ui.status("Verwendung: /tools [list|on|off]", "info")
+            continue
 
         if user_input.lower() == "/memory":
             categories = memory_system.list_categories()
@@ -1440,13 +1522,25 @@ def main():
             label = backend.get("label") or backend.get("name") or backend_label or "SelfAI"
             try:
                 ui.start_spinner("SelfAI denkt nach...")
-                response_text, streamed = _generate_with_backend(
-                    interface,
-                    label,
-                    system_prompt,
-                    user_input,
-                    history,
-                )
+
+                # Use tool-calling if enabled
+                if tools_enabled:
+                    response_text, streamed = _generate_with_tools(
+                        interface,
+                        label,
+                        system_prompt,
+                        user_input,
+                        history,
+                    )
+                else:
+                    response_text, streamed = _generate_with_backend(
+                        interface,
+                        label,
+                        system_prompt,
+                        user_input,
+                        history,
+                    )
+
                 active_chat_backend_index = backend_index
                 break
             except Exception as exc:  # pylint: disable=broad-except

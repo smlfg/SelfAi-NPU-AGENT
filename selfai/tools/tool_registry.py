@@ -649,6 +649,77 @@ register_tool(
 )
 
 
+def write_project_file(
+    path: str,
+    content: str,
+    mode: str = "w",
+) -> str:
+    """
+    Schreibt Inhalt in eine Datei innerhalb des Projektverzeichnisses.
+
+    Args:
+        path: Pfad relativ zum Projektroot.
+        content: Der zu schreibende Inhalt.
+        mode: Schreibmodus ('w' für überschreiben, 'a' für anhängen).
+
+    Returns:
+        JSON string mit Status und Pfad.
+    """
+    try:
+        file_path = _resolve_project_path(path)
+    except ValueError as exc:
+        return json.dumps({"error": str(exc), "status": "failed"})
+
+    if mode not in ("w", "a"):
+        return json.dumps({"error": "mode muss 'w' oder 'a' sein", "status": "failed"})
+
+    try:
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+        file_path.write_text(content, encoding="utf-8") if mode == "w" else file_path.write_text(
+            file_path.read_text(encoding="utf-8") + content if file_path.exists() else content,
+            encoding="utf-8"
+        )
+        return json.dumps({
+            "status": "success",
+            "path": str(file_path.relative_to(PROJECT_ROOT)),
+            "mode": mode
+        })
+    except OSError as exc:
+        return json.dumps({"error": f"Datei konnte nicht geschrieben werden: {exc}", "status": "failed"})
+
+
+register_tool(
+    RegisteredTool(
+        name="write_project_file",
+        func=write_project_file,
+        schema={
+            "name": "write_project_file",
+            "description": "Schreibt oder ergänzt eine Textdatei im Projekt (UTF-8).",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "Pfad relativ zum Projektroot.",
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "Der zu schreibende Inhalt.",
+                    },
+                    "mode": {
+                        "type": "string",
+                        "enum": ["w", "a"],
+                        "description": "Schreibmodus: 'w' überschreibt, 'a' hängt an (Standard: 'w').",
+                    },
+                },
+                "required": ["path", "content"],
+            },
+        },
+        output_type="string",
+    )
+)
+
+
 # --- Accessor Functions ---
 
 def get_tool(tool_name: str) -> RegisteredTool | None:
