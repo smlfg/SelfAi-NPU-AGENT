@@ -978,10 +978,14 @@ def main():
         Tries to use ToolCallingInterface first, falls back to direct generation.
         """
         try:
+            # Get agent-specific tools if configured
+            active_agent = agent_manager.active_agent
+            agent_tools = active_agent.allowed_tools if active_agent else None
+
             # Create tool-calling wrapper
             tool_interface = ToolCallingInterface(
                 llm_interface=interface,
-                tool_names=None,  # Use all available tools
+                tool_names=agent_tools,  # Use agent-specific tools (None = all tools)
                 max_iterations=5,
                 ui=ui,
             )
@@ -1024,14 +1028,27 @@ def main():
 
             if subcommand == "list":
                 all_tools = get_all_tool_schemas()
-                if all_tools:
-                    ui.status(f"Verfügbare Tools ({len(all_tools)}):", "info")
+                active_agent = agent_manager.active_agent
+
+                # Check if agent has specific tools configured
+                if active_agent and active_agent.allowed_tools is not None:
+                    agent_tool_names = set(active_agent.allowed_tools)
+                    ui.status(f"Tools für Agent '{active_agent.display_name}' ({len(agent_tool_names)}):", "info")
+                    for tool in all_tools:
+                        name = tool.get("name", "?")
+                        if name in agent_tool_names:
+                            desc = tool.get("description", "")
+                            ui.status(f"  🔧 {name}: {desc[:80]}", "info")
+                    if not agent_tool_names:
+                        ui.status("  (Keine Tools für diesen Agenten konfiguriert)", "warning")
+                else:
+                    # Agent has access to all tools
+                    ui.status(f"Alle verfügbaren Tools ({len(all_tools)}):", "info")
                     for tool in all_tools:
                         name = tool.get("name", "?")
                         desc = tool.get("description", "")
                         ui.status(f"  🔧 {name}: {desc[:80]}", "info")
-                else:
-                    ui.status("Keine Tools registriert.", "warning")
+
                 ui.status(f"Tool-Support: {'✅ Aktiviert' if tools_enabled else '❌ Deaktiviert'}", "info")
                 continue
 

@@ -19,6 +19,7 @@ class Agent:
     description: str = ""
     tags: list[str] = field(default_factory=list)
     path: Optional[Path] = None
+    allowed_tools: Optional[list[str]] = None  # None = all tools, [] = no tools, ['tool1', 'tool2'] = specific tools
 
 
 class AgentManager:
@@ -77,6 +78,13 @@ class AgentManager:
                 continue
 
             key = agent_cfg["name"].lower()
+
+            # Load allowed tools (optional)
+            allowed_tools = agent_cfg.get("tools")
+            if allowed_tools is not None and not isinstance(allowed_tools, list):
+                print(f"⚠️  'tools' in {config_path} muss eine Liste sein, ignoriere.")
+                allowed_tools = None
+
             agent = Agent(
                 key=key,
                 display_name=agent_cfg["display_name"],
@@ -87,6 +95,7 @@ class AgentManager:
                 description=agent_cfg.get("description", ""),
                 tags=agent_cfg.get("tags", []),
                 path=folder,
+                allowed_tools=allowed_tools,
             )
             agents[key] = agent
 
