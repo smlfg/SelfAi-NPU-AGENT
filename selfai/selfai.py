@@ -1022,6 +1022,7 @@ def main():
 
         if user_input.lower().startswith("/tools"):
             from selfai.tools.tool_registry import get_all_tool_schemas
+            nonlocal tools_enabled
 
             parts = user_input.split()
             subcommand = parts[1].lower() if len(parts) > 1 else "list"
@@ -1053,13 +1054,11 @@ def main():
                 continue
 
             if subcommand in ("on", "enable"):
-                nonlocal tools_enabled
                 tools_enabled = True
                 ui.status("✅ Tool-Support aktiviert.", "success")
                 continue
 
             if subcommand in ("off", "disable"):
-                nonlocal tools_enabled
                 tools_enabled = False
                 ui.status("❌ Tool-Support deaktiviert.", "warning")
                 continue
