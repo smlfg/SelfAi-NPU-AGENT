@@ -1,0 +1,262 @@
+# Unified Configuration Schema for DGX Agent Playbooks
+# All agents must conform to this schema
+
+# Schema version
+schema_version: "1.0.0"
+
+# Playbook configuration structure
+playbook:
+  # Playbook metadata
+  name:
+    type: string
+    required: true
+    description: "Human-readable name of the playbook"
+    example: "DGX Dashboard"
+
+  agent_id:
+    type: string
+    required: true
+    pattern: "^agent[0-9]+_[a-z_]+$"
+    description: "Unique agent identifier (e.g., agent2_dashboard)"
+    example: "agent2_dashboard"
+
+  version:
+    type: string
+    required: true
+    pattern: "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    description: "Semantic version number"
+    example: "1.0.0"
+
+  description:
+    type: string
+    required: true
+    description: "Brief description of the playbook's purpose"
+    example: "Web UI + GPU Monitoring for AI/ML infrastructure"
+
+  # Dependencies
+  dependencies:
+    type: list
+    items:
+      type: string
+    required: false
+    description: "List of Python package dependencies"
+    example:
+      - "flask>=2.3.0"
+      - "psutil>=5.9.0"
+      - "pynvml>=11.5.0"
+
+  system_dependencies:
+    type: list
+    items:
+      type: string
+    required: false
+    description: "List of system package dependencies (apt)"
+    example:
+      - "nvidia-smi"
+      - "cuda-toolkit-12-4"
+
+  # Network configuration
+  ports:
+    type: list
+    items:
+      type: integer
+      min: 1024
+      max: 65535
+    required: true
+    description: "List of exposed ports"
+    example: [11000]
+
+  # Storage configuration
+  volumes:
+    type: list
+    items:
+      type: object
+      properties:
+        host:
+          type: string
+          description: "Host path"
+        container:
+          type: string
+          description: "Container path"
+        mode:
+          type: string
+          enum: ["ro", "rw"]
+          default: "rw"
+    required: false
+    description: "Volume mounts"
+    example:
+      - host: "./data"
+        container: "/app/data"
+        mode: "rw"
+      - host: "./config"
+        container: "/app/config"
+        mode: "ro"
+
+  # Resource requirements
+  resources:
+    type: object
+    required: true
+    properties:
+      gpu_required:
+        type: boolean
+        required: true
+        description: "Whether GPU access is required"
+        example: true
+
+      gpu_count:
+        type: integer
+        min: 0
+        max: 8
+        required: false
+        description: "Number of GPUs required"
+        example: 2
+
+      memory_gb:
+        type: integer
+        min: 1
+        max: 1024
+        required: false
+        description: "Memory requirement in GB"
+        example: 32
+
+      cpu_cores:
+        type: integer
+        min: 1
+        max: 128
+        required: false
+        description: "CPU cores required"
+        example: 8
+
+  # Health check configuration
+  health_check:
+    type: object
+    required: true
+    properties:
+      endpoint:
+        type: string
+        required: true
+        description: "Health check endpoint path"
+        example: "/api/health"
+
+      interval_seconds:
+        type: integer
+        min: 5
+        max: 300
+        default: 30
+        description: "Health check interval"
+        example: 30
+
+      timeout_seconds:
+        type: integer
+        min: 1
+        max: 60
+        default: 10
+        description: "Health check timeout"
+        example: 10
+
+      retries:
+        type: integer
+        min: 1
+        max: 10
+        default: 3
+        description: "Number of retries before marking unhealthy"
+        example: 3
+
+  # Environment variables
+  environment:
+    type: object
+    required: false
+    description: "Environment variables for the playbook"
+    example:
+      DASHBOARD_HOST: "0.0.0.0"
+      DASHBOARD_PORT: "11000"
+      LOG_LEVEL: "INFO"
+
+  # Monitoring and metrics
+  monitoring:
+    type: object
+    required: false
+    properties:
+      enabled:
+        type: boolean
+        default: true
+
+      metrics_port:
+        type: integer
+        min: 1024
+        max: 65535
+        default: 9090
+
+      log_level:
+        type: string
+        enum: ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+        default: "INFO"
+
+  # Deployment configuration
+  deployment:
+    type: object
+    required: false
+    properties:
+      restart_policy:
+        type: string
+        enum: ["no", "always", "on-failure", "unless-stopped"]
+        default: "unless-stopped"
+
+      replicas:
+        type: integer
+        min: 1
+        max: 10
+        default: 1
+
+      update_strategy:
+        type: string
+        enum: ["recreate", "rolling"]
+        default: "rolling"
+
+# Example complete configuration
+example_config:
+  playbook:
+    name: "DGX Dashboard"
+    agent_id: "agent2_dashboard"
+    version: "1.0.0"
+    description: "Web UI + GPU Monitoring"
+
+    dependencies:
+      - "flask>=2.3.0"
+      - "flask-cors>=4.0.0"
+      - "psutil>=5.9.0"
+
+    ports:
+      - 11000
+
+    volumes:
+      - host: "./logs"
+        container: "/app/logs"
+        mode: "rw"
+
+    resources:
+      gpu_required: true
+      gpu_count: 2
+      memory_gb: 16
+      cpu_cores: 4
+
+    health_check:
+      endpoint: "/api/health"
+      interval_seconds: 30
+      timeout_seconds: 10
+      retries: 3
+
+    environment:
+      DASHBOARD_HOST: "0.0.0.0"
+      DASHBOARD_PORT: "11000"
+      LOG_LEVEL: "INFO"
+
+    monitoring:
+      enabled: true
+      metrics_port: 9090
+      log_level: "INFO"
+
+    deployment:
+      restart_policy: "unless-stopped"
+      replicas: 1
+      update_strategy: "rolling"

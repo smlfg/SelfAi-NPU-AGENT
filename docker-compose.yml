@@ -1,0 +1,78 @@
+# Docker Compose for SelfAi NPU Agent - DGX Spark Playbooks
+# Multi-agent orchestration
+
+version: '3.8'
+
+services:
+  # Agent 2: System Dashboard & Monitoring
+  agent2_dashboard:
+    build:
+      context: .
+      dockerfile: agents/agent2_dashboard/Dockerfile
+    container_name: agent2_dashboard
+    image: selfai/agent2_dashboard:1.0.0
+    restart: unless-stopped
+
+    # GPU access (all GPUs)
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+    # Port mapping
+    ports:
+      - "11000:11000"  # Dashboard API
+
+    # Volume mounts
+    volumes:
+      - ./playbooks/dgx-dashboard/logs:/app/logs:rw
+      - ./jupyter_sessions:/app/jupyter_sessions:rw
+      - ./playbooks/dgx-dashboard/config.env:/app/config.env:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro  # For Docker management
+
+    # Environment variables
+    environment:
+      - DASHBOARD_HOST=0.0.0.0
+      - DASHBOARD_PORT=11000
+      - DASHBOARD_DEBUG=false
+      - LOG_LEVEL=INFO
+      - HEALTH_CHECK_PORT=11000
+      - HEALTH_CHECK_ENDPOINT=/api/health
+      # GPU monitoring
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "python", "/app/shared/health_check.py"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    # Network
+    networks:
+      - selfai_network
+
+    # Logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# Networks
+networks:
+  selfai_network:
+    driver: bridge
+    name: selfai_network
+
+# Volumes (optional, for persistent data)
+volumes:
+  dashboard_logs:
+    driver: local
+  jupyter_sessions:
+    driver: local
