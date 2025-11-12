@@ -1,0 +1,14 @@
+# Dashboard & Monitoring dependencies
+
+# Web server framework
+flask>=2.3.0
+flask-cors>=4.0.0
+
+# GPU monitoring (optional, uncomment as needed)
+# pynvml>=11.5.0          # For NVIDIA GPUs
+# pyrsmi                  # For AMD ROCm GPUs
+
+# JupyterLab orchestration (optional)
+# jupyterlab>=4.0.0
+
+# System monitoring (psutil already in requirements-core.txt)

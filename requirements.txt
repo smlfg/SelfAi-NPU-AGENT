@@ -3,3 +3,6 @@
 
 # Install optional NPU dependencies
 -r requirements-npu.txt
+
+# Install dashboard & monitoring dependencies
+-r requirements-dashboard.txt

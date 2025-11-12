@@ -1,0 +1,1 @@
+System Dashboard & Monitoring Agent: Manages GPU monitoring, JupyterLab orchestration, resource allocation, and system health checks for AI/ML compute infrastructure.
