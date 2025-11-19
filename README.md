@@ -506,23 +506,69 @@ wget <model-url> -O models/model.gguf
 
 ## 🐳 Docker Support
 
-### Quick Start
+**Run SelfAI with zero setup!** Docker provides a consistent, isolated environment that works on any platform.
+
+### ⚡ One-Command Quick Start
 
 ```bash
-# Build and run
-docker-compose up -d
+# Clone the repository
+git clone https://github.com/smlfg/SelfAi-NPU-AGENT.git
+cd SelfAi-NPU-AGENT
 
-# View logs
-docker-compose logs -f selfai
+# Copy configuration
+cp config.yaml.template config.yaml
+cp .env.example .env
+echo "API_KEY=docker-cpu-mode" >> .env
 
-# Access container
-docker-compose exec selfai bash
+# Download model (first time only, ~2.3GB)
+mkdir -p models
+wget https://huggingface.co/microsoft/Phi-3-mini-4k-instruct-gguf/resolve/main/Phi-3-mini-4k-instruct-q4.gguf \
+     -O models/Phi-3-mini-4k-instruct.Q4_K_M.gguf
 
-# Stop
-docker-compose down
+# Start SelfAI 🚀
+docker-compose up
 ```
 
-See [docker-compose.yml](docker-compose.yml) for configuration.
+**That's it!** SelfAI is now running in CPU fallback mode.
+
+### 📖 Full Docker Documentation
+
+For comprehensive Docker usage including:
+- Development workflow with live code editing
+- Using CLI commands inside containers
+- Troubleshooting common issues
+- Advanced configuration
+
+**👉 See the complete [Docker Guide](docs/DOCKER_GUIDE.md)**
+
+### Common Docker Commands
+
+```bash
+# Start in background
+docker-compose up -d
+
+# View live logs
+docker-compose logs -f selfai
+
+# Run commands inside container
+docker-compose exec selfai python selfai/selfai.py
+docker-compose exec selfai pytest
+docker-compose exec selfai bash
+
+# Stop services
+docker-compose down
+
+# Rebuild after code changes
+docker-compose up -d --build
+```
+
+### Why Use Docker?
+
+✅ **Works Everywhere** - Same environment on Windows, macOS, Linux
+✅ **No Dependencies** - Python, libraries, everything included
+✅ **Isolated** - Won't conflict with your system
+✅ **Reproducible** - Same results every time
+✅ **Easy Cleanup** - Remove everything with one command
 
 ---
 
@@ -579,6 +625,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Refactoring Plan](REFACTORING_PLAN.md) - Clean architecture migration
 - [UI Guide](UI_GUIDE.md) - Terminal UI features
 - [Contributing Guide](CONTRIBUTING.md) - Development setup
+- [Docker Guide](docs/DOCKER_GUIDE.md) - Complete Docker usage guide
 
 ---
 
