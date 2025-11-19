@@ -9,6 +9,7 @@ Modules:
     planner: Task decomposition and planning
     executor: Subtask execution orchestration
     merger: Result synthesis and aggregation
+    pipeline: High-level orchestrator for complete pipeline flow
 """
 
 from .models import (
@@ -21,9 +22,10 @@ from .models import (
     PlannerContext,
     ExecutionStatus,
 )
-from .planner import Planner, PlannerConfig
-from .executor import Executor, ExecutorConfig
+from .planner import Planner, PlannerConfig, create_fallback_plan
+from .executor import Executor, ExecutorConfig, BackendConfig
 from .merger import Merger, MergerConfig
+from .pipeline import Pipeline, PipelineResult
 
 __all__ = [
     # Data Models
@@ -38,8 +40,13 @@ __all__ = [
     # Pipeline Components
     "Planner",
     "PlannerConfig",
+    "create_fallback_plan",
     "Executor",
     "ExecutorConfig",
+    "BackendConfig",
     "Merger",
     "MergerConfig",
+    # Orchestrator
+    "Pipeline",
+    "PipelineResult",
 ]
