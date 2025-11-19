@@ -1,0 +1,154 @@
+version: '3.8'
+
+services:
+  # Main SelfAI service (CPU fallback mode)
+  selfai:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: selfai-npu-agent
+    image: selfai-npu-agent:latest
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 8G
+        reservations:
+          cpus: '2.0'
+          memory: 4G
+
+    # Environment variables
+    environment:
+      - API_KEY=${API_KEY:-cpu-fallback-only}
+      - PYTHONUNBUFFERED=1
+      - SELFAI_ENV=docker
+
+    # Volume mounts
+    volumes:
+      # Persist conversation memory
+      - ./memory:/app/memory
+
+      # Persist execution plans
+      - ./memory/plans:/app/memory/plans
+
+      # Model storage (mount your pre-downloaded models)
+      - ./models:/app/models:ro
+
+      # Agent configurations
+      - ./agents:/app/agents:ro
+
+      # Configuration file
+      - ./config.yaml:/app/config.yaml:ro
+
+      # Environment file
+      - ./.env:/app/.env:ro
+
+    # Working directory
+    working_dir: /app
+
+    # Interactive terminal
+    stdin_open: true
+    tty: true
+
+    # Command override (default: run SelfAI)
+    command: ["python", "selfai/selfai.py"]
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    # Network
+    networks:
+      - selfai-network
+
+  # Optional: Ollama service for planning/merge
+  ollama:
+    image: ollama/ollama:latest
+    container_name: selfai-ollama
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+
+    # Volumes for model storage
+    volumes:
+      - ollama-data:/root/.ollama
+
+    # Expose Ollama API
+    ports:
+      - "11434:11434"
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+    # Logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    # Network
+    networks:
+      - selfai-network
+
+    # Auto-restart
+    restart: unless-stopped
+
+networks:
+  selfai-network:
+    driver: bridge
+    name: selfai-network
+
+volumes:
+  ollama-data:
+    driver: local
+    name: selfai-ollama-data
+
+# Usage Examples:
+#
+# 1. Build and start services:
+#    docker-compose up -d
+#
+# 2. View logs:
+#    docker-compose logs -f selfai
+#
+# 3. Access SelfAI interactively:
+#    docker-compose exec selfai python selfai/selfai.py
+#
+# 4. Run tests:
+#    docker-compose exec selfai pytest
+#
+# 5. Pull Ollama models (if using Ollama service):
+#    docker-compose exec ollama ollama pull gemma3:1b
+#    docker-compose exec ollama ollama pull gemma3:3b
+#
+# 6. Stop services:
+#    docker-compose down
+#
+# 7. Stop and remove volumes:
+#    docker-compose down -v
+#
+# 8. Rebuild after code changes:
+#    docker-compose up -d --build
