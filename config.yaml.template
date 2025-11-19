@@ -19,6 +19,7 @@ cpu_fallback:
 # --- System Settings ---
 system:
   streaming_enabled: true # Enable word-by-word streaming output
+  enable_telemetry: true # Enable performance metrics collection
 
 # --- Agent Configuration ---
 agent_config:

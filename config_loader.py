@@ -41,6 +41,7 @@ class CPUConfig:
 class SystemConfig:
     streaming_enabled: bool
     stream_timeout: float | None = None
+    enable_telemetry: bool = True
 
 @dataclass
 class AgentConfig:
