@@ -1,0 +1,12 @@
+# Core dependencies for CPU-based fallback operation
+PyYAML
+python-dotenv
+openai
+llama-cpp-python
+numpy
+pyarrow
+tabulate
+smmap
+psutil
+qai-hub-models
+smolagents

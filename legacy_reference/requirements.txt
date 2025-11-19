@@ -1,0 +1,5 @@
+# Install core dependencies
+-r requirements-core.txt
+
+# Install optional NPU dependencies
+-r requirements-npu.txt
