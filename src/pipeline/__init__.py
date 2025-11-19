@@ -26,6 +26,7 @@ from .planner import Planner, PlannerConfig, create_fallback_plan
 from .executor import Executor, ExecutorConfig, BackendConfig
 from .merger import Merger, MergerConfig
 from .pipeline import Pipeline, PipelineResult
+from .agent_pipeline import AgentPipeline
 
 __all__ = [
     # Data Models
@@ -46,7 +47,8 @@ __all__ = [
     "BackendConfig",
     "Merger",
     "MergerConfig",
-    # Orchestrator
+    # Orchestrators
     "Pipeline",
     "PipelineResult",
+    "AgentPipeline",  # CLI-compatible interface
 ]
