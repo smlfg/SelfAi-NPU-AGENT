@@ -1,0 +1,28 @@
+# Core Infrastructure Dependencies (Refactored Architecture)
+# These are the ADDITIONAL dependencies needed for the refactored src/ package
+# Install with: pip install -r requirements-refactored.txt
+#
+# Note: This file should be installed AFTER requirements-core.txt
+# The following are already in requirements-core.txt and don't need reinstalling:
+#   - PyYAML
+#   - python-dotenv
+#   - numpy
+#   - psutil
+#   - qai-hub-models
+#   - smolagents
+#   - llama-cpp-python
+#   - openai
+#   - pyarrow
+#   - tabulate
+#   - smmap
+
+# Configuration Management (NEW)
+pydantic>=2.5.0          # Data validation and settings management
+pydantic-settings>=2.1.0 # Settings management with env var support
+
+# Logging (NEW)
+colorama>=0.4.6         # Cross-platform colored terminal output
+
+# Install all dependencies with:
+#   pip install -r requirements-core.txt
+#   pip install -r requirements-refactored.txt
