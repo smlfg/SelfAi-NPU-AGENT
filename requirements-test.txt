@@ -1,0 +1,65 @@
+# ==============================================================================
+# Test Dependencies for SelfAI NPU Agent
+# ==============================================================================
+#
+# Installation:
+#   pip install -r requirements-test.txt
+#
+# Or install in development mode with all dependencies:
+#   pip install -r requirements.txt -r requirements-test.txt
+#
+
+# Core Testing Framework
+# ------------------------------------------------------------------------------
+pytest>=8.0.0              # Main testing framework
+pytest-cov>=4.1.0          # Coverage reporting
+pytest-mock>=3.12.0        # Enhanced mocking utilities
+pytest-timeout>=2.2.0      # Timeout support for hanging tests
+pytest-xdist>=3.5.0        # Parallel test execution
+
+
+# Mocking and Fixtures
+# ------------------------------------------------------------------------------
+pytest-factoryboy>=2.6.0   # Factory fixtures for complex objects
+pytest-freezegun>=0.4.2    # Mock datetime for time-dependent tests
+responses>=0.24.0          # Mock HTTP requests
+
+
+# Code Quality and Style
+# ------------------------------------------------------------------------------
+pytest-pylint>=0.21.0      # Pylint integration
+pytest-flake8>=1.1.1       # Flake8 integration
+pytest-black>=0.3.12       # Black code formatter check
+pytest-mypy>=0.10.3        # Type checking integration
+
+
+# Coverage and Reporting
+# ------------------------------------------------------------------------------
+coverage[toml]>=7.4.0      # Coverage with TOML support
+pytest-html>=4.1.1         # HTML test reports
+pytest-json-report>=1.5.0  # JSON test reports
+
+
+# Performance and Profiling
+# ------------------------------------------------------------------------------
+pytest-benchmark>=4.0.0    # Benchmarking slow operations
+pytest-profiling>=1.7.0    # Profile test execution
+
+
+# Debugging
+# ------------------------------------------------------------------------------
+pytest-pdb>=0.3.2          # Better PDB integration
+pytest-picked>=0.5.0       # Run only tests from modified files
+pytest-watch>=4.2.0        # Auto-run tests on file changes
+
+
+# Documentation
+# ------------------------------------------------------------------------------
+pytest-doctestplus>=1.1.0  # Enhanced doctest support
+
+
+# Optional: Advanced Features
+# ------------------------------------------------------------------------------
+# hypothesis>=6.98.0       # Property-based testing
+# pytest-bdd>=7.0.0        # Behavior-driven development
+# pytest-asyncio>=0.23.0   # Async test support
